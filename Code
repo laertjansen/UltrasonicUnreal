@@ -1,0 +1,121 @@
+// Ultrasonic sensor, LEDs, and a 16x2 LCD display were used in this experiment
+// I send the averaged value of every five readings to smooth the Arduino data
+
+#include <Arduino.h>
+#include <LiquidCrystal.h>
+
+//LEDS
+int led_Red = 2;
+int led_Yellow = 3;
+int led_Blue = 4;
+
+// Ultrasonic sensor pins
+const int trigPin = 5;
+const int echoPin = 6;
+
+//LCD
+const int rs = 7, en = 8, d4 = 9, d5 = 10, d6 = 11, d7 = 12;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+// Variables for distance measurement
+long duration;
+int distance;
+int readings[5];    // Array for smoothing
+int readIndex = 0;  
+int total = 0;      
+int average = 0;    
+
+
+void setup() {
+  Serial.begin(9600);  
+
+  lcd.begin(16, 2);
+  lcd.clear();
+
+  pinMode(led_Red, OUTPUT);
+  pinMode(led_Yellow, OUTPUT);
+  pinMode(led_Blue, OUTPUT);
+
+  // Set pin modes for ultrasonic sensor
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Initialize readings array to 0
+  for (int i = 0; i < 5; i++) {
+    readings[i] = 0;
+  }
+}
+
+void loop() {
+
+  measureDistance();
+
+  lcd.setCursor(1, 0);
+  lcd.print(distance);
+
+  if (average >= 50 || average <= 0) {
+    digitalWrite(led_Red, LOW);
+    digitalWrite(led_Yellow, LOW);
+    digitalWrite(led_Blue, LOW);
+    Serial.println("ALL OFF");
+    clearLine(0);
+    lcd.setCursor(0, 0);
+    lcd.print("-");
+
+  } else if (average <= 49 && average > 29) {
+    digitalWrite(led_Red, HIGH);
+    digitalWrite(led_Yellow, LOW);
+    digitalWrite(led_Blue, LOW);
+    Serial.println("RED");
+    clearLine(0);
+    lcd.setCursor(0, 0);
+    lcd.print("RED");
+
+  } else if (average <= 29 && average > 9) {
+    digitalWrite(led_Red, LOW);
+    digitalWrite(led_Yellow, HIGH);
+    digitalWrite(led_Blue, LOW);
+    Serial.println("YELLOW");
+    clearLine(0);
+    lcd.setCursor(0, 0);
+    lcd.print("YELLOW");
+
+  } else if (average <= 9 && average > 1) {
+    digitalWrite(led_Red, LOW);
+    digitalWrite(led_Yellow, LOW);
+    digitalWrite(led_Blue, HIGH);
+    Serial.println("BLUE");
+    clearLine(0);
+    lcd.setCursor(0, 0);
+    lcd.print("BLUE");
+  }
+  //delay(30);
+}
+
+void clearLine(int row) {
+  lcd.setCursor(0, row);
+  lcd.print("                "); // 16 spaces
+}
+
+
+void measureDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+
+  distance = duration * 0.034 / 2; // Calculate the distance in cm
+
+  // Add the new distance to the readings array
+  total -= readings[readIndex];     // Subtract the oldest reading
+  readings[readIndex] = distance;   // Add the new reading
+  total += readings[readIndex];     // Add it to the total
+  readIndex = (readIndex + 1) % 5;  // Advance to the next index
+
+  
+  average = total / 5; // Calculate the average
+}
