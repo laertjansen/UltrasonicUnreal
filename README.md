@@ -8,3 +8,8 @@ I explored several Unreal Engine 5 scenes where the data drives both a widget’
 
 ![UltrasonicAnim_2](https://github.com/user-attachments/assets/6327057e-3855-4397-a2be-7bdf24fb2520)
 
+On the Unreal Engine side, most of the logic was implemented directly in the Level Blueprint. The diagram below illustrates the approach: Niagara logic is highlighted in red, while the widget logic is shown in yellow, where incoming values drive a Material Parameter applied to an Image component in UMG.
+
+![Blueprint](https://github.com/user-attachments/assets/b581f33b-4c79-4c64-ae42-1846d2a1f693)
+
+
